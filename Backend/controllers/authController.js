@@ -1,49 +1,36 @@
-const User = require('../models/User')
-const { generateToken } = require('../config/jwt');
+const User = require("../models/User");
+const jwt = require("jsonwebtoken");
 
-exports.register = async (req, res, next) => {
-  try {
-    const { email, password, firstName, lastName, role } = req.body;
-    
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(409).json({ message: 'User already exists' });
-    }
+const generateToken = (user) =>
+  jwt.sign(
+    { id: user._id, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: "1d" }
+  );
 
-    const user = new User({ 
-      email: email.toLowerCase(), 
-      firstName, 
-      lastName, 
-      role: role || 'user' 
-    });
-    
-    const registeredUser = await User.register(user, password);
-    const token = generateToken({ id: registeredUser._id, role: registeredUser.role });
-    
-    res.status(201).json({
-      token,
-      user: registeredUser.toJSON()
-    });
-  } catch (error) {
-    next(error);
-  }
+exports.register = async (req, res) => {
+  const user = await User.create(req.body);
+  const token = generateToken(user);
+
+  res.json({ token, user: user.toJSON() });
 };
 
-exports.login = async (req, res, next) => {
-  try {
-    const token = generateToken({ id: req.user._id, role: req.user.role });
-    req.user.lastLogin = new Date();
-    await req.user.save();
-    
-    res.json({
-      token,
-      user: req.user.toJSON()
-    });
-  } catch (error) {
-    next(error);
-  }
+exports.login = async (req, res) => {
+  const { email, password } = req.body;
+
+  const user = await User.findOne({ email });
+
+  if (!user || !(await user.comparePassword(password)))
+    return res.status(401).json({ message: "Invalid credentials" });
+
+  user.lastLogin = new Date();
+  await user.save();
+
+  const token = generateToken(user);
+
+  res.json({ token, user: user.toJSON() });
 };
 
-exports.profile = async (req, res) => {
-  res.json(req.user.toJSON());
+exports.profile = (req, res) => {
+  res.json(req.user);
 };

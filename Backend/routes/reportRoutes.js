@@ -1,10 +1,7 @@
-const express = require('express');
-const { getDashboardStats } = require('../controllers/reportController');
-const { requireAuth } = require('../middleware/authMiddleware');
+const router = require("express").Router();
+const { requireAuth } = require("../config/passport");
+const { getDashboardStats } = require("../controllers/reportController");
 
-const router = express.Router();
-router.use(requireAuth);
-
-router.get('/dashboard', getDashboardStats);
+router.get("/dashboard", requireAuth, getDashboardStats);
 
 module.exports = router;

@@ -1,24 +1,14 @@
-const express = require('express');
-const multer = require('multer');
-const {
-  createCMS,
-  getCMSList,
-  getCMSById,
-  updateCMS,
-  deleteCMS
-} = require('../controllers/cmsController');
-const { requireAuth } = require('../middleware/authMiddleware');
-const { requireAdmin } = require('../middleware/roleMiddleware');
-const upload = multer({ dest: 'uploads/' });
+const router = require("express").Router();
+const { requireAuth } = require("../config/passport");
+const { requireAdmin } = require("../middleware/roleMiddleware");
 
-const router = express.Router();
+const controller = require("../controllers/cmsController");
 
-router.use(requireAuth);
+router.get("/", controller.getCMSList);
+router.get("/:id", controller.getCMSById);
 
-router.get('/', getCMSList);
-router.get('/:id', getCMSById);
-router.post('/', upload.single('featuredImage'), requireAdmin, createCMS);
-router.put('/:id', upload.single('featuredImage'), requireAdmin, updateCMS);
-router.delete('/:id', requireAdmin, deleteCMS);
+router.post("/", requireAuth, requireAdmin, controller.createCMS);
+router.put("/:id", requireAuth, requireAdmin, controller.updateCMS);
+router.delete("/:id", requireAuth, requireAdmin, controller.deleteCMS);
 
 module.exports = router;

@@ -1,49 +1,19 @@
-const passport = require('passport');
-const LocalStrategy = require('passport-local').Strategy;
-const JWTStrategy = require('passport-jwt').Strategy;
-const ExtractJwt = require('passport-jwt').ExtractJwt;
-const User = require('../models/User')
+const jwt = require("jsonwebtoken");
+const User = require("../models/User");
 
-module.exports = function(passport) {
-  // Local Strategy
-  passport.use(new LocalStrategy(
-    { usernameField: 'email', passwordField: 'password' },
-    async (email, password, done) => {
-      try {
-        const user = await User.findOne({ email: email.toLowerCase() });
-        if (!user || !user.isValidPassword(password)) {
-          return done(null, false, { message: 'Invalid credentials' });
-        }
-        return done(null, user);
-      } catch (err) {
-        return done(err);
-      }
-    }
-  ));
+exports.requireAuth = async (req, res, next) => {
+  const header = req.headers.authorization;
 
-  // JWT Strategy
-  const jwtOpts = {
-    jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-    secretOrKey: process.env.JWT_SECRET
-  };
+  if (!header)
+    return res.status(401).json({ message: "No token provided" });
 
-  passport.use(new JWTStrategy(jwtOpts, async (jwtPayload, done) => {
-    try {
-      const user = await User.findById(jwtPayload.id);
-      if (user) return done(null, user);
-      return done(null, false);
-    } catch (err) {
-      return done(err, false);
-    }
-  }));
+  const token = header.split(" ")[1];
 
-  passport.serializeUser((user, done) => done(null, user.id));
-  passport.deserializeUser(async (id, done) => {
-    try {
-      const user = await User.findById(id);
-      done(null, user);
-    } catch (err) {
-      done(err, null);
-    }
-  });
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = await User.findById(decoded.id);
+    next();
+  } catch {
+    res.status(401).json({ message: "Invalid token" });
+  }
 };

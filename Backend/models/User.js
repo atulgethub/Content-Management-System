@@ -1,36 +1,44 @@
-const mongoose = require('mongoose');
-const passportLocalMongoose = require('passport-local-mongoose');
-const bcrypt = require('bcryptjs');
+const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 
-const userSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true, lowercase: true },
-  firstName: { type: String, required: true },
-  lastName: { type: String, required: true },
-  role: { type: String, enum: ['admin', 'user'], default: 'user' },
+const userSchema = new mongoose.Schema(
+{
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+
+  firstName: String,
+  lastName: String,
+
+  role: {
+    type: String,
+    enum: ["admin", "user"],
+    default: "user"
+  },
+
   avatar: String,
   isActive: { type: Boolean, default: true },
   lastLogin: Date
-}, { timestamps: true });
+},
+{ timestamps: true }
+);
 
-userSchema.plugin(passportLocalMongoose, {
-  usernameField: 'email',
-  hashField: 'password'
+userSchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
+  this.password = await bcrypt.hash(this.password, 10);
 });
 
-userSchema.methods.toJSON = function() {
+userSchema.methods.comparePassword = function (password) {
+  return bcrypt.compare(password, this.password);
+};
+
+userSchema.methods.toJSON = function () {
   return {
     id: this._id,
     email: this.email,
-    firstName: this.firstName,
-    lastName: this.lastName,
     role: this.role,
-    avatar: this.avatar,
-    isActive: this.isActive
+    firstName: this.firstName,
+    lastName: this.lastName
   };
 };
 
-userSchema.methods.isValidPassword = async function(password) {
-  return await bcrypt.compare(password, this.password);
-};
-
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.model("User", userSchema);

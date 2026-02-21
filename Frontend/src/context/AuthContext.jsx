@@ -1,49 +1,42 @@
-import { createContext, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import api from "../api/axios";
+import {createContext,useState,useEffect} from "react";
+import {useNavigate} from "react-router-dom";
+import API from "../api/axios";
 
-export const AuthContext = createContext();
+export const AuthContext=createContext();
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const navigate = useNavigate();
+export const AuthProvider=({children})=>{
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      api.get("/auth/profile")
-        .then(res => setUser(res.data))
-        .catch(() => logout());
-    }
-  }, []);
+ const navigate=useNavigate();
+ const [user,setUser]=useState(null);
 
-  const login = async (data) => {
-    const res = await api.post("/auth/login", data);
-    localStorage.setItem("token", res.data.token);
-    setUser(res.data.user);
+ useEffect(()=>{
+  const saved=localStorage.getItem("user");
+  if(saved) setUser(JSON.parse(saved));
+ },[]);
 
-    if (res.data.user.role === "admin")
-      navigate("/admin/dashboard");
-    else
-      navigate("/user/dashboard");
-  };
+ const login=async(data)=>{
+   const res=await API.post("/auth/login",data);
 
-  const register = async (data) => {
-    const res = await api.post("/auth/register", data);
-    localStorage.setItem("token", res.data.token);
-    setUser(res.data.user);
-    navigate("/user/dashboard");
-  };
+   localStorage.setItem("token",res.data.token);
+   localStorage.setItem("user",JSON.stringify(res.data.user));
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    setUser(null);
-    navigate("/login");
-  };
+   setUser(res.data.user);
 
-  return (
-    <AuthContext.Provider value={{ user, login, register, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
+   if(res.data.user.role==="admin")
+     navigate("/admin");
+   else
+     navigate("/user");
+ };
+
+ const logout=()=>{
+  localStorage.clear();
+  setUser(null);
+  navigate("/");
+ };
+
+ return(
+  <AuthContext.Provider value={{user,login,logout}}>
+    {children}
+  </AuthContext.Provider>
+ );
 };

@@ -1,9 +1,8 @@
-import { useState, useContext } from "react";
-import { Link } from "react-router-dom";
+import { useContext, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
+import { Link } from "react-router-dom";
 
 export default function Login() {
-
   const { login } = useContext(AuthContext);
 
   const [form, setForm] = useState({
@@ -11,45 +10,55 @@ export default function Login() {
     password: ""
   });
 
-  const submit = e => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     login(form);
   };
 
   return (
-    <div className="h-screen flex justify-center items-center bg-gradient-to-br from-blue-500 to-blue-700">
-
-      <form onSubmit={submit}
-        className="bg-white w-96 p-10 rounded-xl shadow-xl">
-
-        <h2 className="text-2xl font-bold text-center mb-6">
+    <div className="h-screen flex items-center justify-center bg-blue-600">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white p-8 rounded-xl w-96 shadow-xl flex flex-col"
+      >
+        <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
           Login as Admin or User
         </h2>
 
         <input
-          className="input"
+          type="email"
           placeholder="Email"
+          value={form.email}
           onChange={e => setForm({ ...form, email: e.target.value })}
+          className="mb-4 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+          required
         />
 
         <input
           type="password"
-          className="input mt-4"
           placeholder="Password"
+          value={form.password}
           onChange={e => setForm({ ...form, password: e.target.value })}
+          className="mb-4 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+          required
         />
 
-        <button className="w-full bg-blue-600 text-white mt-6 py-2 rounded-lg">
+        <button
+          type="submit"
+          className="bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+        >
           Login
         </button>
 
-        <p className="text-center mt-4 text-sm">
-          Don't have an account?
-          <Link to="/register" className="text-blue-600 ml-1 font-semibold">
-            Sign Up
+        <p className="text-center text-gray-600 mt-4 text-sm">
+          No account?{" "}
+          <Link
+            to="/register"
+            className="text-blue-600 font-medium hover:underline"
+          >
+            Register
           </Link>
         </p>
-
       </form>
     </div>
   );

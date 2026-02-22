@@ -1,10 +1,9 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import API from "../api/axios";
+import { useContext, useState } from "react";
+import { AuthContext } from "../context/AuthContext";
+import { Link } from "react-router-dom";
 
 export default function Register() {
-
-  const navigate = useNavigate();
+  const { register } = useContext(AuthContext);
 
   const [form, setForm] = useState({
     firstName: "",
@@ -13,57 +12,73 @@ export default function Register() {
     password: ""
   });
 
-  const submit = async e => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-
-    await API.post("/auth/register", form);
-
-    alert("Account created successfully!");
-    navigate("/");
+    register(form);
   };
 
   return (
-    <div className="h-screen flex justify-center items-center bg-gradient-to-br from-blue-500 to-blue-700">
-
-      <form onSubmit={submit}
-        className="bg-white w-96 p-10 rounded-xl shadow-xl">
-
-        <h2 className="text-2xl font-bold text-center mb-6">
+    <div className="h-screen flex items-center justify-center bg-gray-100">
+      <form 
+        onSubmit={handleSubmit} 
+        className="bg-white p-8 rounded-xl w-96 shadow-xl flex flex-col"
+      >
+        <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
           Create Account
         </h2>
 
-        <input className="input"
+        <input
+          type="text"
           placeholder="First Name"
+          value={form.firstName}
           onChange={e => setForm({ ...form, firstName: e.target.value })}
+          className="mb-4 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+          required
         />
 
-        <input className="input mt-3"
+        <input
+          type="text"
           placeholder="Last Name"
+          value={form.lastName}
           onChange={e => setForm({ ...form, lastName: e.target.value })}
+          className="mb-4 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+          required
         />
 
-        <input className="input mt-3"
+        <input
+          type="email"
           placeholder="Email"
+          value={form.email}
           onChange={e => setForm({ ...form, email: e.target.value })}
+          className="mb-4 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+          required
         />
 
-        <input className="input mt-3"
+        <input
           type="password"
           placeholder="Password"
+          value={form.password}
           onChange={e => setForm({ ...form, password: e.target.value })}
+          className="mb-4 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+          required
         />
 
-        <button className="w-full bg-blue-600 text-white mt-6 py-2 rounded-lg">
+        <button
+          type="submit"
+          className="bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+        >
           Register
         </button>
 
-        <p className="text-center mt-4 text-sm">
-          Already have account?
-          <Link to="/" className="text-blue-600 ml-1 font-semibold">
+        <p className="text-center text-gray-600 mt-4 text-sm">
+          Already have an account?{" "}
+          <Link
+            to="/"
+            className="text-blue-600 font-medium hover:underline"
+          >
             Login
           </Link>
         </p>
-
       </form>
     </div>
   );

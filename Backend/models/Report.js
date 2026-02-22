@@ -1,27 +1,13 @@
 const mongoose = require("mongoose");
 
 const reportSchema = new mongoose.Schema(
-{
-  title: String,
-
-  type: {
-    type: String,
-    enum: ["sales", "analytics", "user", "cms"]
+  {
+    title: String,
+    message: String,
+    status: { type: String, enum: ["Pending", "Approved", "Rejected"], default: "Pending" },
+    author: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   },
-
-  period: {
-    type: String,
-    enum: ["daily", "weekly", "monthly"]
-  },
-
-  data: mongoose.Schema.Types.Mixed,
-
-  generatedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User"
-  }
-},
-{ timestamps: true }
+  { timestamps: true }
 );
 
-module.exports = mongoose.model("Report", reportSchema);
+module.exports = mongoose.models.Report || mongoose.model("Report", reportSchema);

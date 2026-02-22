@@ -1,38 +1,43 @@
 const CMS = require("../models/CMS");
 
-exports.createCMS = async (req, res) => {
-  const cms = await CMS.create({
-    ...req.body,
-    author: req.user._id
-  });
-
-  res.json(cms);
-};
-
 exports.getCMSList = async (req, res) => {
-  const cms = await CMS.find()
-    .populate("author", "firstName lastName")
-    .sort({ createdAt: -1 });
-
+  const filter = req.user.role === "admin" ? {} : { author: req.user._id };
+  const cms = await CMS.find(filter).populate("author", "firstName lastName");
   res.json(cms);
 };
 
 exports.getCMSById = async (req, res) => {
-  const cms = await CMS.findById(req.params.id);
+  const cms = await CMS.findById(req.params.id).populate("author", "firstName lastName");
+  if (!cms) return res.status(404).json({ message: "CMS not found" });
   res.json(cms);
 };
 
-exports.updateCMS = async (req, res) => {
-  const cms = await CMS.findByIdAndUpdate(
-    req.params.id,
-    req.body,
-    { new: true }
-  );
+exports.createCMS = async (req, res) => {
+  const cms = new CMS({ ...req.body, author: req.user._id });
+  if (req.file) cms.featuredImage = req.file.path;
+  await cms.save();
+  res.status(201).json(cms);
+};
 
+exports.updateCMS = async (req, res) => {
+  const cms = await CMS.findById(req.params.id);
+  if (!cms) return res.status(404).json({ message: "CMS not found" });
+  if (req.user.role !== "admin" && !cms.author.equals(req.user._id))
+    return res.status(403).json({ message: "Forbidden" });
+
+  Object.assign(cms, req.body);
+  if (req.file) cms.featuredImage = req.file.path;
+  await cms.save();
   res.json(cms);
 };
 
 exports.deleteCMS = async (req, res) => {
-  await CMS.findByIdAndDelete(req.params.id);
-  res.json({ message: "Deleted" });
+  const cms = await CMS.findById(req.params.id);
+  if (!cms) return res.status(404).json({ message: "CMS not found" });
+  if (req.user.role !== "admin" && !cms.author.equals(req.user._id))
+    return res.status(403).json({ message: "Forbidden" });
+
+  cms.status = "archived";
+  await cms.save();
+  res.json({ message: "CMS archived successfully" });
 };

@@ -4,18 +4,13 @@ import { Outlet } from "react-router-dom";
 
 export default function UserLayout() {
   return (
-    <div className="flex">
-
-      <Sidebar role="user" />
-
-      <div className="flex-1 bg-slate-100 min-h-screen">
-
+    <div className="flex min-h-screen">
+      <Sidebar />
+      <div className="flex-1 bg-slate-100">
         <Navbar />
-
         <div className="p-6">
-          <Outlet />
+          <Outlet /> {/* This renders nested user routes */}
         </div>
-
       </div>
     </div>
   );

@@ -3,17 +3,16 @@ const mongoose = require("mongoose");
 const cmsSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
-    slug: { type: String, required: true, unique: true },
     content: { type: String, required: true },
-    excerpt: String,
-    status: { type: String, enum: ["draft", "published", "archived"], default: "draft" },
-    category: { type: String, default: "general" },
-    tags: [String],
-    featuredImage: String,
-    author: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    author: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    status: { type: String, default: "Draft" }, // Draft / Published
   },
   { timestamps: true }
 );
 
-// ✅ Fix OverwriteModelError
-module.exports = mongoose.models.CMS || mongoose.model("CMS", cmsSchema);
+// Prevent OverwriteModelError
+module.exports = mongoose.models?.CMS || mongoose.model("CMS", cmsSchema);

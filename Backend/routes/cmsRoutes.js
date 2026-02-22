@@ -1,16 +1,35 @@
 const express = require("express");
 const router = express.Router();
-const multer = require("multer");
-const upload = multer({ dest: "uploads/" });
-const { requireAuth } = require("../middleware/authMiddleware");
-const cmsController = require("../controllers/cmsController");
+const CMS = require("../models/CMS");
+const { protect } = require("../middleware/authMiddleware");
 
-router.use(requireAuth); // protect all routes
+// Get all blogs for logged-in user
+router.get("/", protect, async (req, res) => {
+  try {
+    const cms = await CMS.find({ author: req.user._id }).sort({ createdAt: -1 });
+    res.json(cms);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
-router.get("/", cmsController.getCMSList); // list blogs
-router.get("/:id", cmsController.getCMSById); // single blog
-router.post("/", upload.single("featuredImage"), cmsController.createCMS); // create
-router.put("/:id", upload.single("featuredImage"), cmsController.updateCMS); // update
-router.delete("/:id", cmsController.deleteCMS); // delete/archive
+// Create a blog
+router.post("/", protect, async (req, res) => {
+  const { title, content } = req.body;
+  if (!title || !content) return res.status(400).json({ message: "Title and content required" });
+
+  try {
+    const blog = new CMS({
+      title,
+      content,
+      author: req.user._id,
+      status: "Published",
+    });
+    await blog.save();
+    res.status(201).json(blog);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
 module.exports = router;

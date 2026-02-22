@@ -1,15 +1,17 @@
 const express = require("express");
 const router = express.Router();
-const multer = require("multer");
-const upload = multer({ dest: "uploads/" });
-const { requireAuth } = require("../middleware/authMiddleware");
-const { requireAdmin } = require("../middleware/roleMiddleware");
-const cmsController = require("../controllers/cmsController");
 
-router.get("/", requireAuth, cmsController.getCMSList);
-router.get("/:id", requireAuth, cmsController.getCMSById);
-router.post("/", requireAuth, upload.single("featuredImage"), cmsController.createCMS);
-router.put("/:id", requireAuth, upload.single("featuredImage"), cmsController.updateCMS);
-router.delete("/:id", requireAuth, cmsController.deleteCMS);
+const { protect } = require("../middleware/authMiddleware"); // Make sure this exists
+const {
+  getSettings,
+  updateSettings,
+} = require("../controllers/settingController"); // Make sure exported as CommonJS functions
+
+// Protect all settings routes
+router.use(protect);
+
+// Routes
+router.get("/", getSettings);       // get current settings
+router.post("/", updateSettings);   // update settings
 
 module.exports = router;

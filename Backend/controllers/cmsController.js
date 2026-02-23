@@ -1,81 +1,99 @@
-const express = require("express");
-const router = express.Router();
 const CMS = require("../models/CMS");
-const { protect } = require("../middleware/authMiddleware");
+const User = require("../models/User");
 
-
-// GET BLOGS
-router.get("/", protect, async (req, res) => {
+// ===== GET ALL CMS (admin sees all, user sees own or published) =====
+exports.getCMSList = async (req, res) => {
   try {
-
-    const filter =
-      req.user.role === "admin"
-        ? {}
-        : { author: req.user._id };
-
-    const blogs = await CMS.find(filter)
-      .populate("author", "firstName email")
+    const filter = req.user.role === "admin" ? {} : { status: "Published" };
+    const cms = await CMS.find(filter)
+      .populate("author", "firstName lastName email")
       .sort({ createdAt: -1 });
-
-    res.json(blogs);
-
+    res.json(cms);
   } catch (err) {
+    console.error("GET CMS ERROR:", err);
     res.status(500).json({ message: err.message });
   }
-});
+};
 
-
-// CREATE BLOG
-router.post("/", protect, async (req, res) => {
+// ===== CREATE CMS =====
+exports.createCMS = async (req, res) => {
   try {
-
-    const blog = await CMS.create({
-      title: req.body.title,
-      content: req.body.content,
-      author: req.user._id,
-      status: "Published",
-    });
-
-    res.status(201).json(blog);
-
+    const cms = new CMS({ ...req.body, author: req.user._id });
+    await cms.save();
+    res.status(201).json(cms);
   } catch (err) {
+    console.error("CREATE CMS ERROR:", err);
     res.status(500).json({ message: err.message });
   }
-});
+};
 
+// ===== UPDATE CMS =====
+exports.updateCMS = async (req, res) => {
+  try {
+    const cms = await CMS.findById(req.params.id);
+    if (!cms) return res.status(404).json({ message: "CMS not found" });
 
-// UPDATE BLOG
-router.put("/:id", protect, async (req, res) => {
+    // Only admin or author can update
+    if (req.user.role !== "admin" && !cms.author.equals(req.user._id)) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
 
-  const blog = await CMS.findById(req.params.id);
-
-  if (!blog)
-    return res.status(404).json({ message: "Not found" });
-
-  if (
-    req.user.role !== "admin" &&
-    !blog.author.equals(req.user._id)
-  ) {
-    return res.status(403).json({ message: "Forbidden" });
+    Object.assign(cms, req.body); // title, content, status
+    await cms.save();
+    res.json(cms);
+  } catch (err) {
+    console.error("UPDATE CMS ERROR:", err);
+    res.status(500).json({ message: err.message });
   }
+};
 
-  Object.assign(blog, req.body);
+// ===== DELETE CMS =====
+exports.deleteCMS = async (req, res) => {
+  try {
+    const cms = await CMS.findById(req.params.id);
+    if (!cms) return res.status(404).json({ message: "CMS not found" });
 
-  await blog.save();
+    // Only admin or author can delete
+    if (req.user.role !== "admin" && !cms.author.equals(req.user._id)) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
 
-  res.json(blog);
-});
+    await cms.deleteOne();
+    res.json({ message: "CMS deleted successfully" });
+  } catch (err) {
+    console.error("DELETE CMS ERROR:", err);
+    res.status(500).json({ message: err.message });
+  }
+};
 
+// ===== ADMIN DASHBOARD STATS =====
+exports.getAdminDashboard = async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ message: "Not authorized" });
+    }
 
-// DELETE BLOG (ADMIN)
-router.delete("/:id", protect, async (req, res) => {
+    const totalCMS = await CMS.countDocuments();
+    const totalDraft = await CMS.countDocuments({ status: "Draft" });
+    const totalPublished = await CMS.countDocuments({ status: "Published" });
+    const totalArchived = await CMS.countDocuments({ status: "Archived" });
+    const totalUsers = await User.countDocuments();
 
-  if (req.user.role !== "admin")
-    return res.status(403).json({ message: "Admin only" });
+    const recentCMS = await CMS.find()
+      .populate("author", "firstName lastName email")
+      .sort({ createdAt: -1 })
+      .limit(5);
 
-  await CMS.findByIdAndDelete(req.params.id);
-
-  res.json({ message: "Blog deleted" });
-});
-
-module.exports = router;
+    res.json({
+      totalCMS,
+      totalDraft,
+      totalPublished,
+      totalArchived,
+      totalUsers,
+      recentCMS,
+    });
+  } catch (err) {
+    console.error("ADMIN DASHBOARD ERROR:", err);
+    res.status(500).json({ message: "Server Error" });
+  }
+};

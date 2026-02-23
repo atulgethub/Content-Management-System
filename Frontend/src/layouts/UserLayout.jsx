@@ -4,13 +4,26 @@ import { Outlet } from "react-router-dom";
 
 export default function UserLayout() {
   return (
-    <div className="flex min-h-screen">
-      <Sidebar />
-      <div className="flex-1 bg-slate-100">
-        <Navbar />
-        <div className="p-6">
-          <Outlet /> {/* This renders nested user routes */}
+    <div className="h-screen flex bg-gray-100">
+
+      {/* Sidebar fixed */}
+      <div className="fixed left-0 top-0 h-screen w-64">
+        <Sidebar />
+      </div>
+
+      {/* Content area */}
+      <div className="flex flex-col flex-1 ml-64">
+
+        {/* Navbar fixed */}
+        <div className="fixed top-0 left-64 right-0 z-50">
+          <Navbar />
         </div>
+
+        {/* Scrollable content */}
+        <main className="mt-16 p-6 overflow-y-auto h-[calc(100vh-64px)]">
+          <Outlet />
+        </main>
+
       </div>
     </div>
   );

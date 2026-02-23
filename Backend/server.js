@@ -38,6 +38,9 @@ app.use("/api/auth", authRoutes);
 app.use("/api/cms", cmsRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/settings", settingRoutes);
+app.use("/api/users", require("./routes/userRoutes"));
+
+
 
 // Health check
 app.get("/api/health", (req,res) => res.json({ status: "OK" }));

@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 /* ========= LAYOUTS ========= */
 import AdminLayout from "./layouts/AdminLayout";
@@ -18,6 +18,7 @@ import MyBlogs from "./pages/user/MyBlogs";
 import MyReports from "./pages/user/MyReports";
 import Profile from "./pages/user/Profile";
 import AllBlogs from "./pages/user/AllBlogs";
+import BlogDetails from "./pages/user/BlogDetails"; // ⭐ ADD THIS
 
 /* ========= AUTH ========= */
 import Login from "./pages/Login";
@@ -30,7 +31,7 @@ export default function App() {
   return (
     <Routes>
 
-      {/* PUBLIC */}
+      {/* ================= PUBLIC ================= */}
       <Route path="/" element={<Login />} />
       <Route path="/register" element={<Register />} />
 
@@ -38,9 +39,10 @@ export default function App() {
       <Route element={<ProtectedRoute role="admin" />}>
         <Route path="/admin" element={<AdminLayout />}>
 
-          <Route index element={<AdminDashboard />} />
-          <Route path="dashboard" element={<AdminDashboard />} />
+          {/* default redirect */}
+          <Route index element={<Navigate to="dashboard" />} />
 
+          <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="blogs" element={<AdminBlogs />} />
           <Route path="users" element={<UsersManagement />} />
           <Route path="cms" element={<CMSManagement />} />
@@ -55,16 +57,21 @@ export default function App() {
       <Route element={<ProtectedRoute role="user" />}>
         <Route path="/user" element={<UserLayout />}>
 
-          <Route index element={<UserDashboard />} />
-          <Route path="dashboard" element={<UserDashboard />} />
+          {/* default redirect */}
+          <Route index element={<Navigate to="dashboard" />} />
 
+          <Route path="dashboard" element={<UserDashboard />} />
           <Route path="blogs" element={<AllBlogs />} />
+          <Route path="blog/:id" element={<BlogDetails />} /> {/* ⭐ FIX */}
           <Route path="myblogs" element={<MyBlogs />} />
           <Route path="reports" element={<MyReports />} />
           <Route path="profile" element={<Profile />} />
 
         </Route>
       </Route>
+
+      {/* fallback route */}
+      <Route path="*" element={<Navigate to="/" />} />
 
     </Routes>
   );

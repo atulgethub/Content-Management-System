@@ -1,50 +1,93 @@
-import {useEffect,useState} from "react";
+import { useEffect, useState } from "react";
 import API from "../../api/axios";
 
-export default function AdminBlogs(){
+export default function AdminBlogs() {
+  const [blogs, setBlogs] = useState([]);
+  const [editing, setEditing] = useState(null);
+  const [form, setForm] = useState({ title: "", content: "" });
 
- const [blogs,setBlogs]=useState([]);
+  const fetchBlogs = async () => {
+    const res = await API.get("/cms");
+    setBlogs(res.data);
+  };
 
- const fetchBlogs=()=>{
-   API.get("/cms").then(res=>setBlogs(res.data));
- };
+  useEffect(() => {
+    fetchBlogs();
+  }, []);
 
- useEffect(fetchBlogs,[]);
+  const handleEdit = (blog) => {
+    setEditing(blog._id);
+    setForm({ title: blog.title, content: blog.content });
+  };
 
- const deleteBlog=async(id)=>{
-   await API.delete(`/cms/${id}`);
-   fetchBlogs();
- };
+  const handleUpdate = async (id) => {
+    await API.put(`/cms/${id}`, form);
+    setEditing(null);
+    fetchBlogs();
+  };
 
- return(
-  <div>
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure to delete?")) return;
+    await API.delete(`/cms/${id}`);
+    fetchBlogs();
+  };
 
-   <h2 className="text-2xl font-bold mb-6">
-     Manage Blogs
-   </h2>
+  return (
+    <div className="p-6">
+      <h2 className="text-2xl font-bold mb-4">All CMS Blogs</h2>
+      <div className="space-y-4">
+        {blogs.map(blog => (
+          <div key={blog._id} className="bg-white p-4 rounded shadow">
+            <p className="text-sm text-gray-500">
+              By: {blog.author?.firstName} {blog.author?.lastName} ({blog.author?.email})
+            </p>
 
-   {blogs.map(blog=>(
-     <div key={blog._id}
-       className="bg-white p-5 mb-3 rounded shadow flex justify-between">
-
-        <div>
-          <h3>{blog.title}</h3>
-          <p>{blog.author?.firstName}</p>
-        </div>
-
-        <div className="space-x-3">
-          <button className="text-blue-600">Edit</button>
-
-          <button
-            onClick={()=>deleteBlog(blog._id)}
-            className="text-red-600">
-            Delete
-          </button>
-        </div>
-
-     </div>
-   ))}
-
-  </div>
- );
+            {editing === blog._id ? (
+              <>
+                <input
+                  className="border p-2 w-full mb-2"
+                  value={form.title}
+                  onChange={e => setForm({...form, title: e.target.value})}
+                />
+                <textarea
+                  className="border p-2 w-full mb-2"
+                  rows={4}
+                  value={form.content}
+                  onChange={e => setForm({...form, content: e.target.value})}
+                />
+                <button
+                  className="bg-green-600 text-white px-4 py-1 rounded mr-2"
+                  onClick={() => handleUpdate(blog._id)}
+                >
+                  Save
+                </button>
+                <button className="bg-gray-500 text-white px-4 py-1 rounded" onClick={() => setEditing(null)}>
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <>
+                <h3 className="text-lg font-bold">{blog.title}</h3>
+                <p>{blog.content.substring(0, 150)}...</p>
+                <div className="mt-2 space-x-2">
+                  <button
+                    className="bg-blue-600 text-white px-3 py-1 rounded"
+                    onClick={() => handleEdit(blog)}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="bg-red-600 text-white px-3 py-1 rounded"
+                    onClick={() => handleDelete(blog._id)}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }

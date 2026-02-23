@@ -3,23 +3,24 @@ import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 
 export default function Sidebar() {
+
   const { user, logout } = useContext(AuthContext);
   const location = useLocation();
 
-  // ================= ADMIN LINKS =================
+  /* ================= ADMIN MENU ================= */
   const adminLinks = [
-    { name: "Dashboard", path: "/admin" },
+    { name: "Dashboard", path: "/admin/dashboard" },
     { name: "All Blogs", path: "/admin/blogs" },
-    { name: "Users Management", path: "/admin/users" },
+    { name: "Users", path: "/admin/users" },
     { name: "CMS Management", path: "/admin/cms" },
     { name: "Reports", path: "/admin/reports" },
     { name: "Settings", path: "/admin/settings" },
     { name: "Profile", path: "/admin/profile" },
   ];
 
-  // ================= USER LINKS =================
+  /* ================= USER MENU ================= */
   const userLinks = [
-    { name: "Dashboard", path: "/user" },
+    { name: "Dashboard", path: "/user/dashboard" },
     { name: "All Blogs", path: "/user/blogs" },
     { name: "My Blogs", path: "/user/myblogs" },
     { name: "My Reports", path: "/user/reports" },
@@ -28,8 +29,12 @@ export default function Sidebar() {
 
   const links = user?.role === "admin" ? adminLinks : userLinks;
 
+  /* ACTIVE LINK CHECK */
+  const isActive = (path) =>
+    location.pathname.startsWith(path);
+
   return (
-    <div className="w-64 bg-slate-900 text-white min-h-screen flex flex-col p-6">
+    <div className="w-64 bg-slate-900 text-white min-h-screen flex flex-col p-6 fixed">
 
       {/* LOGO */}
       <h1 className="text-2xl font-bold mb-10">
@@ -42,9 +47,9 @@ export default function Sidebar() {
           <Link
             key={link.name}
             to={link.path}
-            className={`block px-4 py-3 rounded transition ${
-              location.pathname === link.path
-                ? "bg-slate-700"
+            className={`block px-4 py-3 rounded-lg transition ${
+              isActive(link.path)
+                ? "bg-blue-600"
                 : "hover:bg-slate-700"
             }`}
           >
@@ -55,17 +60,22 @@ export default function Sidebar() {
 
       {/* USER INFO */}
       <div className="border-t border-slate-700 pt-4">
-        <p className="text-sm">Logged in as</p>
+
+        <p className="text-sm text-gray-300">
+          Logged in as
+        </p>
+
         <p className="font-semibold capitalize">
           {user?.role}
         </p>
 
         <button
           onClick={logout}
-          className="mt-4 w-full bg-red-500 hover:bg-red-600 p-2 rounded"
+          className="mt-4 w-full bg-red-500 hover:bg-red-600 p-2 rounded-lg"
         >
           Logout
         </button>
+
       </div>
 
     </div>

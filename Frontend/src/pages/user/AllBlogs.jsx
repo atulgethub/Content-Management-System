@@ -1,31 +1,40 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import API from "../../api/axios";
-import { Link } from "react-router-dom";
 
 export default function AllBlogs() {
   const [blogs, setBlogs] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    API.get("/cms").then((res) => setBlogs(res.data));
+    fetchBlogs();
   }, []);
 
+  const fetchBlogs = async () => {
+    try {
+      const res = await API.get("/cms");
+      // Only show published blogs
+      setBlogs(res.data.filter(blog => blog.status === "Published"));
+    } catch (err) {
+      console.error("FETCH BLOGS ERROR:", err);
+    }
+  };
+
   return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold mb-6">All Blogs</h1>
-
-      <div className="grid md:grid-cols-3 gap-6">
-        {blogs.map((blog) => (
-          <Link key={blog._id} to={`/blogs/${blog._id}`}>
-            <div className="bg-white p-6 rounded shadow hover:shadow-lg">
-              <h3 className="font-semibold text-xl">{blog.title}</h3>
-
-              <p className="text-gray-600 mt-2">
-                {blog.content.slice(0, 100)}...
-              </p>
-            </div>
-          </Link>
-        ))}
-      </div>
+    <div className="p-6 grid md:grid-cols-3 gap-6">
+      {blogs.map(blog => (
+        <div
+          key={blog._id}
+          onClick={() => navigate(`/user/blog/${blog._id}`)}
+          className="cursor-pointer bg-white p-6 rounded-xl shadow hover:shadow-lg transition"
+        >
+          <h2 className="text-lg font-bold">{blog.title}</h2>
+          <p className="text-gray-500 mt-2">{blog.content?.substring(0, 100)}...</p>
+          <p className="text-gray-400 mt-1 text-sm">
+            By: {blog.author?.firstName} {blog.author?.lastName}
+          </p>
+        </div>
+      ))}
     </div>
   );
 }

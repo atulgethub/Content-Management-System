@@ -1,130 +1,108 @@
-import { useEffect, useState, useContext } from "react";
-import { AuthContext } from "../../context/AuthContext";
+import { useEffect, useState } from "react";
+import API from "../../api/axios";
 
 export default function MyBlogs() {
-
-  const { API, user } = useContext(AuthContext);
-
   const [blogs, setBlogs] = useState([]);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  /* ================= FETCH BLOGS ================= */
+  const fetchBlogs = async () => {
+    try {
+      const res = await API.get("/cms/myblogs"); // fetch only user's blogs
+      setBlogs(res.data);
+    } catch (err) {
+      console.error("FETCH BLOGS ERROR:", err);
+    }
+  };
+
   useEffect(() => {
     fetchBlogs();
   }, []);
 
-  const fetchBlogs = async () => {
+  const createBlog = async () => {
+    if (!title.trim() || !content.trim()) return alert("Title and content required");
     try {
-      const res = await API.get("/cms");
-      setBlogs(res.data);
+      await API.post("/cms", { title, content });
+      setTitle("");
+      setContent("");
+      fetchBlogs();
     } catch (err) {
-      console.log("Fetch Blog Error:", err.response?.data || err.message);
+      console.error("CREATE BLOG ERROR:", err);
     }
   };
 
-  /* ================= CREATE BLOG ================= */
-  const createBlog = async () => {
-
-    if (!title.trim() || !content.trim()) {
-      return alert("Title and content required");
-    }
-
+  const updateBlog = async (id) => {
+    const newTitle = prompt("New title:");
+    const newContent = prompt("New content:");
+    if (!newTitle || !newContent) return;
     try {
-      setLoading(true);
-
-      const res = await API.post("/cms", {
-        title,
-        content,
-      });
-
-      console.log("Created:", res.data);
-
-      setTitle("");
-      setContent("");
-
+      await API.put(`/cms/${id}`, { title: newTitle, content: newContent });
       fetchBlogs();
-
-      alert("Blog Created ✅");
-
     } catch (err) {
-      console.log("CREATE BLOG ERROR:", err.response?.data);
-      alert(err.response?.data?.message || "Failed to create blog");
-    } finally {
-      setLoading(false);
+      console.error("UPDATE BLOG ERROR:", err);
+    }
+  };
+
+  const deleteBlog = async (id) => {
+    if (!confirm("Are you sure?")) return;
+    try {
+      await API.delete(`/cms/${id}`);
+      fetchBlogs();
+    } catch (err) {
+      console.error("DELETE BLOG ERROR:", err);
     }
   };
 
   return (
     <div className="p-6">
 
-      <h2 className="text-2xl font-bold mb-6">
-        {user?.role === "admin" ? "All Blogs" : "My Blogs"}
-      </h2>
+      <h2 className="text-2xl font-bold mb-6">My Blogs</h2>
 
-      {/* CREATE BLOG CARD */}
-      <div className="bg-white p-6 rounded-xl shadow mb-10">
-
-        <h3 className="font-semibold mb-4 text-lg">
-          Create New Blog
-        </h3>
-
+      {/* Create Blog */}
+      <div className="bg-white p-6 rounded shadow mb-8">
         <input
-          placeholder="Blog Title"
-          className="w-full border p-3 rounded mb-3"
+          placeholder="Title"
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={e => setTitle(e.target.value)}
+          className="border p-2 w-full mb-2"
         />
-
         <textarea
-          placeholder="Blog Content"
-          className="w-full border p-3 rounded mb-4"
-          rows="5"
+          placeholder="Content"
           value={content}
-          onChange={(e) => setContent(e.target.value)}
+          onChange={e => setContent(e.target.value)}
+          className="border p-2 w-full mb-2"
         />
-
         <button
-          disabled={loading}
           onClick={createBlog}
-          className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
+          className="bg-blue-600 text-white px-4 py-2 rounded"
         >
-          {loading ? "Publishing..." : "Publish Blog"}
+          Create Blog
         </button>
-
       </div>
 
-      {/* BLOG LIST */}
-      <div className="grid md:grid-cols-2 gap-6">
-
-        {blogs.length === 0 && (
-          <p className="text-gray-500">No blogs found.</p>
-        )}
-
-        {blogs.map((blog) => (
-          <div
-            key={blog._id}
-            className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition"
-          >
-            <h3 className="text-xl font-semibold">
-              {blog.title}
-            </h3>
-
-            <p className="text-gray-600 mt-3 line-clamp-3">
-              {blog.content}
-            </p>
-
-            <div className="flex justify-between mt-4 text-sm text-gray-400">
-              <span>Status: {blog.status}</span>
-              <span>
-                {new Date(blog.createdAt).toLocaleDateString()}
-              </span>
+      {/* Blog List */}
+      <div className="space-y-4">
+        {blogs.map(blog => (
+          <div key={blog._id} className="bg-white p-4 rounded shadow">
+            <h3 className="font-semibold">{blog.title}</h3>
+            <p>{blog.content}</p>
+            <p className="text-sm text-gray-400">Status: {blog.status}</p>
+            <div className="mt-2 space-x-2">
+              <button
+                onClick={() => updateBlog(blog._id)}
+                className="bg-yellow-500 px-3 py-1 rounded"
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => deleteBlog(blog._id)}
+                className="bg-red-500 px-3 py-1 rounded"
+              >
+                Delete
+              </button>
             </div>
-
           </div>
         ))}
-
       </div>
     </div>
   );

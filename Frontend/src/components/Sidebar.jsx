@@ -6,17 +6,22 @@ export default function Sidebar() {
   const { user, logout } = useContext(AuthContext);
   const location = useLocation();
 
+  // ================= ADMIN LINKS =================
   const adminLinks = [
     { name: "Dashboard", path: "/admin" },
+    { name: "All Blogs", path: "/admin/blogs" },
+    { name: "Users Management", path: "/admin/users" },
     { name: "CMS Management", path: "/admin/cms" },
     { name: "Reports", path: "/admin/reports" },
-    { name: "Users Management", path: "/admin/users" },
     { name: "Settings", path: "/admin/settings" },
+    { name: "Profile", path: "/admin/profile" },
   ];
 
+  // ================= USER LINKS =================
   const userLinks = [
     { name: "Dashboard", path: "/user" },
-    { name: "My Blogs", path: "/user/blogs" }, // Fixed path
+    { name: "All Blogs", path: "/user/blogs" },
+    { name: "My Blogs", path: "/user/myblogs" },
     { name: "My Reports", path: "/user/reports" },
     { name: "Profile", path: "/user/profile" },
   ];
@@ -24,9 +29,14 @@ export default function Sidebar() {
   const links = user?.role === "admin" ? adminLinks : userLinks;
 
   return (
-    <div className="w-64 bg-slate-800 text-white min-h-screen flex flex-col p-6">
-      <h1 className="text-2xl font-bold mb-10">CMS Dashboard</h1>
+    <div className="w-64 bg-slate-900 text-white min-h-screen flex flex-col p-6">
 
+      {/* LOGO */}
+      <h1 className="text-2xl font-bold mb-10">
+        CMS Dashboard
+      </h1>
+
+      {/* MENU */}
       <div className="flex-1 space-y-2">
         {links.map((link) => (
           <Link
@@ -43,9 +53,12 @@ export default function Sidebar() {
         ))}
       </div>
 
-      <div className="border-t border-slate-600 pt-4">
+      {/* USER INFO */}
+      <div className="border-t border-slate-700 pt-4">
         <p className="text-sm">Logged in as</p>
-        <p className="font-semibold capitalize">{user?.role}</p>
+        <p className="font-semibold capitalize">
+          {user?.role}
+        </p>
 
         <button
           onClick={logout}
@@ -54,6 +67,7 @@ export default function Sidebar() {
           Logout
         </button>
       </div>
+
     </div>
   );
 }

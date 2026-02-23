@@ -1,38 +1,51 @@
-import { useEffect,useState } from "react";
+import { useEffect, useState } from "react";
 import API from "../../api/axios";
 
-export default function UserDashboard(){
+export default function UserDashboard() {
 
-  const [blogs,setBlogs] = useState([]);
+ const [stats,setStats]=useState({
+   totalBlogs:0,
+   myBlogs:[],
+ });
 
-  useEffect(()=>{
-    API.get("/cms").then(res=>setBlogs(res.data));
-  },[]);
+ useEffect(()=>{
+   API.get("/dashboard/user")
+     .then(res=>setStats(res.data));
+ },[]);
 
-  return(
-    <div>
+ return(
+  <div>
 
-      <h2 className="text-2xl font-bold mb-6">
-        Welcome User 👋
-      </h2>
+   <h2 className="text-2xl font-bold mb-6">
+     User Dashboard
+   </h2>
 
-      {/* SUMMARY CARDS */}
-      <div className="grid grid-cols-2 gap-6 mb-8">
+   {/* TOTAL BLOGS */}
+   <div className="grid grid-cols-3 gap-6">
 
-        <div className="bg-white p-6 rounded shadow">
-          <h3>Total Blogs</h3>
-          <p className="text-3xl font-bold">
-            {blogs.length}
-          </p>
-        </div>
+     <div className="bg-white p-6 rounded shadow">
+       <h3>Total Blogs</h3>
+       <p className="text-3xl">{stats.totalBlogs}</p>
+     </div>
 
-        <div className="bg-white p-6 rounded shadow">
-          <h3>Recent Activity</h3>
-          <p>Active</p>
-        </div>
+     <div className="bg-white p-6 rounded shadow">
+       <h3>My Blogs</h3>
+       <p className="text-3xl">{stats.myBlogs.length}</p>
+     </div>
 
-      </div>
+   </div>
 
-    </div>
-  );
+   {/* RECENT BLOGS */}
+   <h3 className="mt-10 font-bold text-xl">
+     My Recent Blogs
+   </h3>
+
+   {stats.myBlogs.map(blog=>(
+     <div key={blog._id} className="bg-white p-4 mt-3 rounded">
+        {blog.title}
+     </div>
+   ))}
+
+  </div>
+ );
 }

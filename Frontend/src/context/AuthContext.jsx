@@ -1,75 +1,56 @@
-import { createContext, useState } from "react";
-import axios from "axios";
+import { createContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import API from "../api/axios";
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
+
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
 
-  // Axios instance
-  const API = axios.create({
-    baseURL: "http://localhost:5000/api",
-    withCredentials: true, // send cookies/session
-  });
+  /* ================= LOAD USER ================= */
+  useEffect(() => {
+    const savedUser = localStorage.getItem("user");
+    if (savedUser) setUser(JSON.parse(savedUser));
+  }, []);
 
-  // ---- REGISTER ----
+  /* ================= REGISTER ================= */
   const register = async (form) => {
-    try {
-      const res = await API.post("/auth/register", form);
-      setUser(res.data.user);
-      localStorage.setItem("token", res.data.token);
+    const res = await API.post("/auth/register", form);
 
-      // Redirect based on role
-      if (res.data.user.role === "admin") {
-        navigate("/admin");
-      } else {
-        navigate("/user");
-      }
-    } catch (err) {
-      console.error(err.response?.data || err);
-      alert(err.response?.data?.message || "Registration failed");
-    }
+    setUser(res.data.user);
+
+    localStorage.setItem("token", res.data.token);
+    localStorage.setItem("user", JSON.stringify(res.data.user));
+
+    redirectUser(res.data.user.role);
   };
 
-  // ---- LOGIN ----
+  /* ================= LOGIN ================= */
   const login = async (form) => {
-    try {
-      const res = await API.post("/auth/login", form);
-      setUser(res.data.user);
-      localStorage.setItem("token", res.data.token);
+    const res = await API.post("/auth/login", form);
 
-      // Redirect based on role
-      if (res.data.user.role === "admin") {
-        navigate("/admin");
-      } else {
-        navigate("/user");
-      }
-    } catch (err) {
-      console.error(err.response?.data || err);
-      alert(err.response?.data?.message || "Login failed");
-    }
+    setUser(res.data.user);
+
+    localStorage.setItem("token", res.data.token);
+    localStorage.setItem("user", JSON.stringify(res.data.user));
+
+    redirectUser(res.data.user.role);
   };
 
-  // ---- LOGOUT ----
+  /* ================= REDIRECT ================= */
+  const redirectUser = (role) => {
+    if (role === "admin") navigate("/admin/dashboard");
+    else navigate("/user/dashboard");
+  };
+
+  /* ================= LOGOUT ================= */
   const logout = () => {
-    localStorage.removeItem("token");
+    localStorage.clear();
     setUser(null);
     navigate("/");
   };
-
-  // ---- Axios interceptor to add token ----
-  API.interceptors.request.use(
-    (config) => {
-      const token = localStorage.getItem("token");
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-      return config;
-    },
-    (error) => Promise.reject(error)
-  );
 
   return (
     <AuthContext.Provider value={{ user, register, login, logout, API }}>
